@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phone Screen Mirror</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot" id="statusDot"></span>
+        <h1>Phone Screen Mirror</h1>
+      </div>
+      <div class="controls">
+        <span id="statusText" class="status-text">starting…</span>
+        <button id="toggleBtn" class="btn">Stop</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage">
+        <div id="videoPlaceholder" class="placeholder">
+          <div class="phone-frame">
+            <p class="hint">Waiting for an iPhone to connect…</p>
+            <p class="sub">
+              On your iPhone: <b>Control Center → Screen Mirroring →</b>
+              pick <b id="deviceName">PC Screen Mirror</b>
+            </p>
+          </div>
+        </div>
+        <!-- M2 will replace the placeholder with a <canvas> fed by WebCodecs. -->
+        <canvas id="screen" hidden></canvas>
+      </section>
+
+      <aside class="sidebar">
+        <h2>Activity log</h2>
+        <div id="log" class="log"></div>
+      </aside>
+    </main>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
