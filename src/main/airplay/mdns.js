@@ -13,8 +13,21 @@
  *   _raop._tcp     -> the audio channel iOS expects to accompany it
  */
 
+const os = require('os');
 const { Bonjour } = require('bonjour-service');
 const { airplayTxt, raopTxt } = require('./features');
+
+/**
+ * The SRV target host MUST be a name that iOS can resolve to this machine's LAN
+ * IP. bonjour-service defaults to `os.hostname()` with no domain, producing a
+ * bare "hostname." target that resolves to nothing — iOS then fails to open the
+ * TCP connection before it ever reaches us. We force the mDNS "<host>.local"
+ * name, for which the Apple Bonjour daemon already publishes a correct A record.
+ */
+function mdnsHost() {
+  const h = os.hostname().replace(/\.local\.?$/i, '').replace(/\.$/, '');
+  return `${h}.local`;
+}
 
 class MdnsAdvertiser {
   constructor(log = console.log) {
@@ -32,6 +45,7 @@ class MdnsAdvertiser {
   start({ name, port, identity }) {
     this.stop();
     this.bonjour = new Bonjour();
+    const host = mdnsHost();
 
     // For _airplay._tcp the Bonjour service NAME must be the device id
     // (colon-separated MAC) followed by "@" and the friendly name is carried
@@ -41,6 +55,7 @@ class MdnsAdvertiser {
       type: 'airplay',
       protocol: 'tcp',
       port,
+      host,
       txt: airplayTxt(identity),
     });
     this.services.push(airplay);
@@ -52,11 +67,12 @@ class MdnsAdvertiser {
       type: 'raop',
       protocol: 'tcp',
       port,
+      host,
       txt: raopTxt(identity),
     });
     this.services.push(raop);
 
-    this.log(`[mdns] advertising "${name}" _airplay._tcp / _raop._tcp on port ${port}`);
+    this.log(`[mdns] advertising "${name}" _airplay._tcp / _raop._tcp on port ${port} (host ${host})`);
     this.log(`[mdns] deviceid=${identity.deviceId} pk=${identity.publicKeyHex.slice(0, 16)}…`);
   }
 

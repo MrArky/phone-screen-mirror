@@ -2,5 +2,14 @@ node_modules/
 dist/
 out/
 data/identity.json
+data/session-log.txt
 *.log
 .DS_Store
+reference/rpiplay/
+
+# downloaded toolchains / archives / crash dumps (not project source)
+*.zip
+*.stackdump
+tcc/
+# compiled reference binaries (keep the .c/.h source next to them)
+reference/build/*.exe

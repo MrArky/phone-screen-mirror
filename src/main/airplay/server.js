@@ -16,6 +16,7 @@ const { EventEmitter } = require('events');
 const { loadOrCreateIdentity } = require('./identity');
 const { MdnsAdvertiser } = require('./mdns');
 const { AirPlayHttpServer } = require('./httpServer');
+const { AirPlaySession } = require('./session');
 
 const DEFAULT_PORT = 7000; // conventional AirPlay port
 
@@ -27,7 +28,20 @@ class AirPlayReceiver extends EventEmitter {
     this.port = opts.port || DEFAULT_PORT;
     this.log = (msg) => this.emit('log', msg);
     this.identity = null;
-    this.http = new AirPlayHttpServer(this.log);
+    // One AirPlaySession per incoming connection; it holds per-connection
+    // pairing/stream state and implements the protocol. Hooks bubble mirror
+    // video + stream lifecycle events up as receiver events.
+    const hooks = {
+      onVideo: (frame) => this.emit('video', frame),
+      onStreamStart: (info) => {
+        this.log(`[receiver] stream started (NAL check: ${info.valid ? 'VALID ✓' : 'INVALID ✗'})`);
+        this.emit('stream-start', info);
+      },
+      onStreamStop: () => this.emit('stream-stop'),
+    };
+    this.http = new AirPlayHttpServer(this.log, ({ socket, peer }) =>
+      new AirPlaySession({ identity: this.identity, log: this.log, socket, peer, hooks, controlPort: this.port })
+    );
     this.mdns = new MdnsAdvertiser(this.log);
   }
 

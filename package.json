@@ -11,9 +11,11 @@
   "author": "",
   "license": "GPL-3.0",
   "devDependencies": {
-    "electron": "^31.0.0"
+    "electron": "^31.7.7"
   },
   "dependencies": {
-    "bonjour-service": "^1.2.1"
+    "bonjour-service": "^1.4.2",
+    "bplist-creator": "^0.1.1",
+    "bplist-parser": "^0.3.2"
   }
 }

@@ -11,4 +11,8 @@ contextBridge.exposeInMainWorld('mirror', {
   stop: () => ipcRenderer.invoke('receiver:stop'),
   onLog: (cb) => ipcRenderer.on('receiver:log', (_e, msg) => cb(msg)),
   onStatus: (cb) => ipcRenderer.on('receiver:status', (_e, status) => cb(status)),
+  onVideo: (cb) => ipcRenderer.on('receiver:video', (_e, frame) => cb(frame)),
+  onStreamStart: (cb) => ipcRenderer.on('receiver:stream-start', (_e, info) => cb(info)),
+  onStreamStop: (cb) => ipcRenderer.on('receiver:stream-stop', () => cb()),
+  fit: (payload) => ipcRenderer.send('ui:fit', payload),
 });
