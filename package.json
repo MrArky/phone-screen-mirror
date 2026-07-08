@@ -6,16 +6,50 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "mdns:test": "node src/main/airplay/mdns-standalone-test.js"
+    "mdns:test": "node src/main/airplay/mdns-standalone-test.js",
+    "make-icon": "node build/make-icon.js",
+    "pack": "electron-builder --dir",
+    "dist": "node build/dist.js"
   },
   "author": "",
   "license": "GPL-3.0",
   "devDependencies": {
-    "electron": "^31.7.7"
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
   },
   "dependencies": {
     "bonjour-service": "^1.4.2",
     "bplist-creator": "^0.1.1",
     "bplist-parser": "^0.3.2"
+  },
+  "build": {
+    "appId": "com.selfuse.phonescreenmirror",
+    "productName": "Phone Screen Mirror",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Phone Screen Mirror"
+    },
+    "portable": {
+      "artifactName": "PhoneScreenMirror-${version}-portable.exe"
+    }
   }
 }

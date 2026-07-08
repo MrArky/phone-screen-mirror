@@ -1,6 +1,7 @@
 node_modules/
 dist/
 out/
+build/tools/
 data/identity.json
 data/session-log.txt
 *.log

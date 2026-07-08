@@ -31,11 +31,14 @@ hardware-accelerated `WebCodecs` API. Keeps the native side small and latency lo
 - [x] **M0 — Discoverable.** PC appears in the iPhone's Screen Mirroring list.
       mDNS advertising + correct `features` flags + control server verified via
       `dns-sd -B _airplay._tcp`.
-- [ ] **M1 — Handshake.** pair-setup/verify + FairPlay `fp-setup`; iPhone connects
+- [x] **M1 — Handshake.** pair-setup/verify + FairPlay `fp-setup`; iPhone connects
       and starts pushing an (encrypted) stream.
-- [ ] **M2 — Picture.** AES-CTR decrypt → H.264 → WebCodecs → canvas (MVP).
-- [ ] **M3 — Audio + sync.** RAOP AAC audio, A/V sync.
-- [ ] **M4 — Polish.** UI, reconnect, rotation/resolution, Windows packaging.
+- [x] **M2 — Picture.** AES-CTR decrypt → H.264 → WebCodecs → canvas (MVP).
+- [x] **M3 — Render.** Live iPhone screen on `<canvas>`, verified on a real
+      device (iOS 18.7.8). *(Audio + A/V sync still TODO — see ROADMAP.)*
+- [x] **M4 — Packaging.** App icon + Windows installer / portable build via
+      electron-builder. (UI polish — demo mode, aspect-fit — landed in M3;
+      reconnect + rotation/resolution remain in ROADMAP.)
 
 ## Run
 
@@ -56,6 +59,38 @@ dns-sd -L "PC Screen Mirror" _airplay._tcp local   # inspect the TXT/features
 Then open **Control Center → Screen Mirroring** on an iPhone on the same LAN and
 confirm the device appears. (Tapping it only works from M1 onward; until then
 the control server just logs the requests iOS makes — useful recon for M1.)
+
+## Build / Package (Windows)
+
+```bash
+npm run make-icon      # regenerate build/icon.* from build/make-icon.js (zero-dep)
+npm run dist           # build dist/ : NSIS installer + portable .exe (icon embedded)
+npm run pack           # just the unpacked app in dist/win-unpacked (fast, no installer)
+```
+
+`npm run dist` produces:
+
+- `dist/Phone Screen Mirror Setup <ver>.exe` — NSIS installer (choose install dir).
+- `dist/PhoneScreenMirror-<ver>-portable.exe` — single-file portable build.
+
+**The app icon** is an iPhone with an app-grid screen, generated procedurally by
+`build/make-icon.js` — pure Node (built-in `zlib` only, no native deps), so it
+sidesteps the "no C++ toolchain" constraint. It draws an RGBA canvas with
+signed-distance rounded rects and hand-writes `build/icon.ico` (multi-size) +
+`build/icon.png`. Edit the palette/layout in that file and re-run `make-icon`.
+
+**Why the build isn't a plain `electron-builder` call** (`build/dist.js`):
+electron-builder stamps the exe icon with `rcedit`, which it runs out of its
+`winCodeSign` vendor bundle. On a stock, non-admin Windows box that bundle can't
+be extracted — its `.7z` contains macOS symlinks and 7-Zip fails with *"client
+does not have the required privilege"* (would need Developer Mode or an elevated
+shell). `build/dist.js` avoids it: it packs with `signAndEditExecutable:false`,
+stamps the icon with a **standalone** `rcedit.exe`, then wraps the result into
+the installers via `--prepackaged`. No admin, no Developer Mode required.
+
+Persistent state (device identity / pairing) is stored under
+`%APPDATA%/phone-screen-mirror/data/` in packaged builds and in the repo's
+`data/` folder during development (`src/main/airplay/paths.js`).
 
 ## Layout
 

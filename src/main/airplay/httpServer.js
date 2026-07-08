@@ -14,8 +14,9 @@ const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const { hexDump } = require('./util');
+const { dataDir } = require('./paths');
 
-const TRANSCRIPT = path.join(__dirname, '..', '..', '..', 'data', 'session-log.txt');
+const TRANSCRIPT = path.join(dataDir(), 'session-log.txt');
 
 class AirPlayHttpServer {
   /**

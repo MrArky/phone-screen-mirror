@@ -100,7 +100,7 @@ class AirPlaySession {
     try {
       const fs = require('fs');
       const path = require('path');
-      const file = path.join(__dirname, '..', '..', '..', 'data', 'debug-capture.json');
+      const file = path.join(require('./paths').dataDir(), 'debug-capture.json');
       fs.writeFileSync(
         file,
         JSON.stringify(

@@ -16,8 +16,9 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { dataDir } = require('./paths');
 
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+const DATA_DIR = dataDir();
 const IDENTITY_FILE = path.join(DATA_DIR, 'identity.json');
 
 /** Build a random, locally-administered MAC-style device id. */

@@ -19,6 +19,7 @@ function createWindow() {
     height: DEFAULT_H,
     backgroundColor: '#0b0d12',
     title: 'Phone Screen Mirror',
+    icon: path.join(__dirname, '..', '..', 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
       contextIsolation: true,

@@ -10,7 +10,23 @@ iPhone AirPlay 屏幕镜像**接收端**(自用)。iPhone 通过「控制中心 
 - **M0 发现**:mDNS 广播 `_airplay._tcp` / `_raop._tcp`,iPhone 能发现设备。✅
 - **M1 握手**:配对 + FairPlay 移植(playfair 与参考 C 实现逐字节一致)。✅
 - **M2 解密**:✅ **已解决**。根因是 `bplist-parser@0.3.2` 把 8 字节整数截断成低 32 位,导致 `streamConnectionID`(流密钥哈希输入)出错、解密全乱。修复:`session.js` 里 `recoverU64()` 从原始 plist 字节恢复完整 uint64。另修了设备不发 SETUP② 的问题(补 `raopNtp.js` NTP timing;iPhone replayd 卡死时**重启 iPhone**)。之前"iOS 26 改协议"的判断是被截断 bug 误导,已证伪。
-- **M3 渲染**:✅ **本次会话完成并真机验证**(iOS 18.7.8)。解密后的 Annex-B H.264 → WebCodecs 解码 → canvas 实时显示,画面跟随 iPhone 实时变化。
+- **M3 渲染**:✅ 真机验证(iOS 18.7.8)。解密后的 Annex-B H.264 → WebCodecs 解码 → canvas 实时显示,画面跟随 iPhone 实时变化。
+- **M4 打包**:✅ **本次会话完成**。软件图标 + Windows 安装包/绿色版(electron-builder)。已生成并验证打包后的 exe 能启动、身份持久化到可写目录。
+
+## 本次会话做了什么(M4)
+
+### 1. 软件图标(纯 Node 零依赖生成)
+- `build/make-icon.js`:纯 Node(只用内置 `zlib`,**无原生依赖**,绕开"没有 C++ 编译器"限制)。在 RGBA 画布上用**有向距离场(SDF)圆角矩形**抗锯齿绘制「iPhone + App 宫格屏幕」图标(深蓝渐变圆角底 + 手机机身 + 灵动岛 + Home 指示条 + 3×4 彩色圆角 App 格子),手写 PNG(zlib deflate + CRC32)和多尺寸 `icon.ico`(16–256,PNG 压缩条目)。产物:`build/icon.ico`、`build/icon.png`。改配色/布局就改这个文件后 `npm run make-icon`。
+- 窗口图标:`src/main/main.js` `BrowserWindow` 加 `icon: build/icon.ico`。
+
+### 2. 打包(electron-builder + 自写编排脚本)
+- `package.json` 加 `build` 配置(appId、productName、win: nsis+portable、`signAndEditExecutable:false`)、devDep `electron-builder@24`,脚本 `make-icon` / `pack`(`--dir`)/ `dist`(跑编排脚本)。
+- **关键坑**:electron-builder 用 `rcedit`(藏在它的 `winCodeSign` 包里)给 exe 打图标,但 `winCodeSign.7z` 含 macOS 符号链接,普通(非管理员)Windows 下 7-Zip 解压报「客户端没有所需的特权」(需开发者模式或管理员)→ 打包失败在 rcedit 步。
+- **解法**:`build/dist.js` 编排三步绕开:①`electron-builder --dir`(`signAndEditExecutable:false`,不碰 winCodeSign)→ ②用**独立** `rcedit-x64.exe`(单文件,无符号链接、无需管理员;脚本自动从 electron-builder 缓存找或从 GitHub 下到 `build/tools/`)给 exe 打图标+版本信息 → ③`electron-builder --prepackaged dist/win-unpacked` 把已打好图标的目录包成 NSIS 安装包 + portable。产物:`dist/Phone Screen Mirror Setup 0.1.0.exe`、`dist/PhoneScreenMirror-0.1.0-portable.exe`。
+
+### 3. 打包必须的数据目录修复(asar 只读问题)
+- 之前 `identity.js`/`httpServer.js`/`session.js` 用 `__dirname/../../../data` 定位数据目录。打包进 **asar** 后该路径只读 → `identity.json` 写不进去 → iPhone 每次都要重新配对。
+- 新增 `src/main/airplay/paths.js`:`dataDir()` 在打包运行时(`app.isPackaged`)用 `app.getPath('userData')/data`(`%APPDATA%/phone-screen-mirror/data`),开发/无 GUI 跑(纯 node)仍用仓库 `data/`。三处消费方都改用它。已验证打包 exe 启动后 identity 正确落到 userData。
 
 ## 本次会话做了什么
 
